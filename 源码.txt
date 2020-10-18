@@ -1,0 +1,152 @@
+import time
+import winreg
+import tkinter as tk
+import tkinter.messagebox
+
+encodes=['UTF-8\n','UTF-16 LE\n','Western(Windows 1252)\n','Western(ISO 8859-1)\n','Western(ISO 8859-3)\n','Western(ISO 8859-15)\n','DOS(CP 437)\n','Arabi(Windows 1256)\n','Arabic(ISO 8859-6)\n','Baltic(Windows 1257)\n','Baltic(ISO 8859-4)\n','Celtic(ISO 8859-14)\n','Celtic European(Windows 1250)\n','Celtic European(ISO 8859-2)\n','Celtic European(CP 852)\n','Western European DOS(CP 850)\n','Cyrillic(Windows 1251)\n','Cyrillic(ISO 8859-5)\n','Cyrillic(CP 866)\n','Cyrillic(KOI8-R)\n','Cyrillic(KOI8-U)\n','Cyrillic(KOI8-RU)\n','Estonian(ISO 8859-13)\n','Greek(Windows 1253)\n','Greek(ISO 8859-7)\n','Hebrew(Windows 1255)\n','Hebrew(ISO 8859-8)\n','Nordic(ISO 8859-10)\n','Romanian(ISO 8859-16)\n','Turkish(Windows 1254)\n','Turkish(ISO 8859-9)\n','Vietnamese(Windows 1258)\n','Simplified Chinese(GBK)\n','Simplified Chinese(GB18030)\n','Simplified Chinese(GB 2312)\n','Traditional Chinese(Big5)\n','Traditional Chinese(Big5-HKSCS)\n','Japanese(Shift JIS)\n','Japanese(EUC-JP)\n','Korean(EUC-KR)\n','Thai(Windows 874)\n','Latin/Thai(ISO 8859-11)\n','Tajik(KOI8-T)\n','Nordic DOS(CP 865)\n']
+
+def get_desktop():
+  key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,r'Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders')
+  return winreg.QueryValueEx(key, "Desktop")[0]
+
+window = tk.Tk()
+window.title('获取可读字符')
+w_w=window.winfo_screenwidth()
+w_h=window.winfo_screenheight()
+win_w=270
+win_h=300
+w_w=int((w_w-win_w)/2)
+w_h=int((w_h-win_h)/2)
+window.geometry("%dx%d+%d+%d" %(win_w,win_h,w_w,w_h))
+window.resizable(0,0)
+fangbian=tk.BooleanVar()
+clearempty=tk.BooleanVar()
+
+def showencode():
+    tkinter.messagebox.showinfo(title = 'Encodes',message=''.join(encodes))
+
+def regsucces():
+    path=c.get()         #文件名
+    encode=f.get()      #必填打开使用的编码
+    allstring=[]
+    somestring=[]
+    try:
+        file_path=open(path,mode='r+',encoding=encode) #打开编码
+        try:
+            for line in file_path.readlines():
+                ta=line
+                ta_len=len(ta)
+                name_get=file_path.name[::-1]
+                sub_get=name_get.find("\\")
+                if sub_get>0:
+                    fanzhuanzifu=name_get[:sub_get]
+                else:
+                    sub_get=name_get.find("/")
+                    if sub_get>0:
+                        fanzhuanzifu=name_get[:sub_get]
+                    else:
+                        fanzhuanzifu=file_path.name[::-1]
+                while ta_len>=1:
+                    ta_len-=1
+                    if(ord(ta[ta_len]) >= 32 and ord(ta[ta_len]) <= 127)or(ord(ta[ta_len]) >= 77882 and ord(ta[ta_len]) <= 106427)or(ord(ta[ta_len]) >= 13312 and ord(ta[ta_len]) <= 40891)or(ord(ta[ta_len]) >= 63800 and ord(ta[ta_len]) <= 64212)or(ord(ta[ta_len]) >= 406602 and ord(ta[ta_len]) <= 448419)or(ord(ta[ta_len]) >= 12353 and ord(ta[ta_len]) <= 55203):   #单个字符筛除
+                        somestring.append(ta[ta_len])
+                msg=''.join(somestring)
+                somestring=[]
+                allstring.append(''.join(reversed(msg)))
+            path2=open(get_desktop()+'\\'+fanzhuanzifu[::-1]+'的经处理的输出文件.txt',mode='w')  #输出文件
+            try:                                                   #自动报错
+                for id in range(0,len(allstring)):
+                    if clearempty.get()==False:
+                        if len(allstring[id])>0:
+                            print(allstring[id],file=path2,sep='')
+                    else:
+                        print(allstring[id],file=path2,sep='')
+                if fangbian.get()==True:
+                    print("\nTime:",time.strftime("%Y-%m-%d", time.localtime()),sep='',file=path2,end='')
+                l = tk.Label(window, 
+                    text='成功！',    #成功
+                    font=('Arial', 11),
+                    width=16, height=2
+                    )
+                l.place(x=75,y=200)
+            except:
+                l2 = tk.Label(window, 
+                    text='第'+str(id)+"无法读取",    # 标签的文字
+                    font=('Arial', 11),         # 字体和字体大小
+                    width=16, height=2          # 标签长宽
+                    )
+                l2.place(x=75,y=200)
+            path2.close()
+        except:
+            l = tk.Label(window, 
+                text='编码错误！',    # 标签的文字
+                font=('Arial', 11),         # 字体和字体大小
+                width=16, height=2          # 标签长宽
+                )
+            l.place(x=75,y=200)
+        file_path.close()
+    except:
+        l = tk.Label(window, 
+            text='编码或路径错误！',    # 标签的文字
+            font=('Arial', 11),         # 字体和字体大小
+            width=16, height=2          # 标签长宽
+            )
+        l.place(x=75,y=200)
+    allstring=None                      #删除变量
+    somestring=None
+    ta_len=None
+
+d = tk.Label(window, 
+    text='路径',    #信息
+    font=('Arial',12),
+    width=16, height=1
+    )
+d.place(x=70,y=10)
+
+e = tk.Label(window, 
+    text='编码',        #信息
+    font=('Arial',12),
+    width=16, height=1)
+e.place(x=70,y=70)
+
+b = tk.Button(window, 
+    text='开始',
+    width=15, height=2, 
+    command=regsucces,
+    bg='yellow')
+b.place(x=87,y=245)
+
+bb = tk.Button(window, 
+    text='各种编码',
+    width=6, height=1, 
+    command=showencode,
+    bg='yellow')
+bb.place(x=1,y=1)
+
+ds = tk.Label(window, 
+    text='仅英文和可读符号以及大部分方块字\n如果不显示某些字符请换一种编码',
+    width=34, height=2,
+    bg='red')
+ds.place(x=17,y=140)
+
+c = tk.Entry(window)        #路径
+c.place(x=71,y=40)
+
+f = tk.Entry(window)        #编码
+f.place(x=71,y=100)
+
+timeshow=tk.Checkbutton(window,text="附加日期",variable=fangbian)
+timeshow.select()
+timeshow.place(x=155,y=180)
+emptyshow=tk.Checkbutton(window,text="显示空行",variable=clearempty)
+emptyshow.select()
+emptyshow.place(x=75,y=180)
+try:
+    window.iconbitmap('triangle.ico')
+    off_windows=False
+except:
+    window.withdraw()
+    tkinter.messagebox.showerror(title = 'Error',message='缺失triangle.ico文件!')
+    off_windows=True
+if not off_windows:
+    window.mainloop()
